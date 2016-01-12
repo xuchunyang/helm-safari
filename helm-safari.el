@@ -1,4 +1,4 @@
-;;; helm-safari.el --- Helm interface for Safari bookmarks  -*- lexical-binding: t; -*-
+;;; helm-safari.el --- Helm interface for Safari Bookmarks and History  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  Chunyang Xu
 
@@ -29,8 +29,19 @@
 (require 'helm-utils)
 
 (defgroup helm-safari nil
-  "Helm interface for Safari Bookmarks."
+  "Helm interface for Safari Bookmarks and History."
   :group 'helm)
+
+(defun helm-safari-list-to-alist (list)
+  ;; '(1 2 3 4) ⇒ ((2 . 1) (4 . 3))
+  (let* ((idx 0)
+         res)
+    (while (< idx (length list))
+      (push (cons (nth (1+ idx) list)
+                  (nth idx list))
+            res)
+      (setq idx (+ idx 2)))
+    (nreverse res)))
 
 (defvar helm-safari-bookmarks-alist nil)
 (defvar helm-source-safari-bookmarks
@@ -38,19 +49,12 @@
     :init
     (lambda ()
       (setq helm-safari-bookmarks-alist
-            (let* ((bookmarks-list
-                    (split-string
-                     (shell-command-to-string
-                      "plutil -p ~/Library/Safari/Bookmarks.plist | grep 'URLString\\|title' | sed 's/.* => \"\\(.*\\)\"/\\1/'")
-                     "\n" t))
-                   (idx 0)
-                   res)
-              (while (< idx (length bookmarks-list))
-                (push (cons (nth (1+ idx) bookmarks-list)
-                            (nth idx bookmarks-list))
-                      res)
-                (setq idx (+ idx 2)))
-              (nreverse res))))
+            (let ((bookmarks-list
+                   (split-string
+                    (shell-command-to-string
+                     "plutil -p ~/Library/Safari/Bookmarks.plist | grep 'URLString\\|title' | sed 's/.* => \"\\(.*\\)\"/\\1/'")
+                    "\n" t)))
+              (helm-safari-list-to-alist bookmarks-list))))
     :candidates 'helm-safari-bookmarks-alist
     :action '(("Browse Url" . browse-url))))
 
@@ -61,6 +65,29 @@
   (helm :sources 'helm-source-safari-bookmarks
         :prompt "Find Bookmark: "
         :buffer "*Helm Safari Bookmarks*"))
+
+(defvar helm-safari-history-alist nil)
+(defvar helm-source-safari-history
+  (helm-build-sync-source "Safari History"
+    :init
+    (lambda ()
+      (setq helm-safari-history-alist
+            (let ((history-list
+                   (split-string
+                    (shell-command-to-string
+                     "plutil -p ~/Library/Safari/History.plist | /usr/bin/grep '\"title\"\\|\"\" ' | sed 's/.* => \"\\(.*\\)\"$/\\1/'")
+                    "\n" t)))
+              (helm-safari-list-to-alist history-list))))
+    :candidates 'helm-safari-history-alist
+    :action '(("Browse Url" . browse-url))))
+
+;;;###autoload
+(defun helm-safari-history ()
+  "Search Safari Bookmark using `helm'."
+  (interactive)
+  (helm :sources 'helm-source-safari-history
+        :prompt "Find Bookmark: "
+        :buffer "*Helm Safari History*"))
 
 (provide 'helm-safari)
 ;;; helm-safari.el ends here
