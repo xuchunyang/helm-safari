@@ -26,7 +26,6 @@
 ;;; Code:
 
 (require 'helm)
-(require 'helm-utils)
 
 (defgroup helm-safari nil
   "Helm interface for Safari Bookmarks and History."
