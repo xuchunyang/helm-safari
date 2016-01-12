@@ -32,21 +32,25 @@
   "Helm interface for Safari Bookmarks."
   :group 'helm)
 
-(defcustom helm-safari-bookmarks-file
-  "~/Downloads/Safari Bookmarks.html"
-  "The bookmark file for Safari."
-  :group 'helm-safari
-  :type 'file)
-
 (defvar helm-safari-bookmarks-alist nil)
 (defvar helm-source-safari-bookmarks
   (helm-build-sync-source "Safari Bookmarks"
-    :init (lambda ()
-            (setq helm-safari-bookmarks-alist
-                  (helm-html-bookmarks-to-alist
-                   helm-safari-bookmarks-file
-                   "\\(https\\|http\\|ftp\\|about\\|file\\)://[^ \"]*"
-                   ">\\([^><]+.\\)</[aA]>")))
+    :init
+    (lambda ()
+      (setq helm-safari-bookmarks-alist
+            (let* ((bookmarks-list
+                    (split-string
+                     (shell-command-to-string
+                      "plutil -p ~/Library/Safari/Bookmarks.plist | grep 'URLString\\|title' | sed 's/.* => \"\\(.*\\)\"/\\1/'")
+                     "\n" t))
+                   (idx 0)
+                   res)
+              (while (< idx (length bookmarks-list))
+                (push (cons (nth (1+ idx) bookmarks-list)
+                            (nth idx bookmarks-list))
+                      res)
+                (setq idx (+ idx 2)))
+              (nreverse res))))
     :candidates 'helm-safari-bookmarks-alist
     :action '(("Browse Url" . browse-url))))
 
