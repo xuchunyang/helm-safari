@@ -4,6 +4,7 @@
 
 ;; Author: Chunyang Xu <xuchunyang56@gmail.com>
 ;; Package-Requires: ((helm "1.9.1") (emacs "24"))
+;; Version: 0.1
 ;; Keywords: tools
 
 ;; This program is free software; you can redistribute it and/or modify
