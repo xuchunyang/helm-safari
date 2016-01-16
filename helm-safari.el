@@ -75,7 +75,7 @@
             (let ((history-list
                    (split-string
                     (shell-command-to-string
-                     "plutil -p ~/Library/Safari/History.plist | /usr/bin/grep '\"title\"\\|\"\" ' | sed 's/.* => \"\\(.*\\)\"$/\\1/'")
+                     "plutil -p ~/Library/Safari/History.plist | grep '\"title\"\\|\"\" ' | sed 's/.* => \"\\(.*\\)\"$/\\1/'")
                     "\n" t)))
               (helm-safari-list-to-alist history-list))))
     :candidates 'helm-safari-history-alist
