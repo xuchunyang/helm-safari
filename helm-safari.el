@@ -27,9 +27,16 @@
 
 ;; To use, type M-x helm-safari-bookmarks or M-x helm-safari-history
 
+;; FIXME: `helm-safari-history' is slow and ugly, it takes me more than 15
+;; seconds to be ready with 1166 history entries
+;; TODO: Improve UI to show link along side name
+;; TODO: Search (match) against link (not just name)
+;; TODO: Improve performance, especially for `helm-safari-history'
+
 ;;; Code:
 
 (require 'helm)
+(require 'json)
 
 (defgroup helm-safari nil
   "Helm interface for Safari Bookmarks and History."
@@ -46,18 +53,29 @@
       (setq idx (+ idx 2)))
     (nreverse res)))
 
+(defun helm-safari-init (dir)
+  (let* ((dir (expand-file-name dir))
+         (files
+          (delete (concat dir "..")
+                  (delete (concat dir ".")
+                          (directory-files dir 'full nil 'nosort))))
+         name-url-alist)
+    (with-temp-buffer
+      (dolist (f files)
+        (erase-buffer)
+        (let ((cmd (format "plutil -convert json -o - -- %s" (shell-quote-argument f)))
+              json)
+          (when (zerop (call-process-shell-command cmd nil t))
+            (setq json (json-read-from-string (buffer-string)))
+            (push (cons (cdr (assoc 'Name json))
+                        (cdr (assoc 'URL json)))
+                  name-url-alist)))))
+    name-url-alist))
+
 (defvar helm-safari-bookmarks-alist nil)
+
 (defvar helm-source-safari-bookmarks
   (helm-build-sync-source "Safari Bookmarks"
-    :init
-    (lambda ()
-      (setq helm-safari-bookmarks-alist
-            (let ((bookmarks-list
-                   (split-string
-                    (shell-command-to-string
-                     "plutil -p ~/Library/Safari/Bookmarks.plist | grep 'URLString\\|title' | sed 's/.* => \"\\(.*\\)\"/\\1/'")
-                    "\n" t)))
-              (helm-safari-list-to-alist bookmarks-list))))
     :candidates 'helm-safari-bookmarks-alist
     :action '(("Browse Url" . browse-url))))
 
@@ -65,24 +83,31 @@
 (defun helm-safari-bookmarks ()
   "Search Safari Bookmarks."
   (interactive)
+  (unless helm-safari-bookmarks-alist
+    (setq helm-safari-bookmarks-alist
+          (helm-safari-init "~/Library/Caches/Metadata/Safari/Bookmarks/")))
   (helm :sources 'helm-source-safari-bookmarks
         :prompt "Find Bookmarks: "
         :buffer "*Helm Safari Bookmarks*"))
 
-(defvar helm-safari-history-alist nil)
 (defvar helm-source-safari-history
-  (helm-build-sync-source "Safari History"
-    :init
-    (lambda ()
-      (setq helm-safari-history-alist
-            (let ((history-list
-                   (split-string
-                    (shell-command-to-string
-                     "plutil -p ~/Library/Safari/History.plist | grep '\"title\"\\|\"\" ' | sed 's/.* => \"\\(.*\\)\"$/\\1/'")
-                    "\n" t)))
-              (helm-safari-list-to-alist history-list))))
-    :candidates 'helm-safari-history-alist
-    :action '(("Browse Url" . browse-url))))
+  (helm-build-in-buffer-source "Safari History"
+    :init #'helm-safari-history-init
+    :action (lambda (candidate)
+              (browse-url (cdr (assoc 'URL (json-read-from-string candidate)))))))
+
+(defun helm-safari-history-init ()
+  (with-current-buffer (helm-candidate-buffer 'global)
+    (let* ((dir
+            (expand-file-name "~/Library/Caches/Metadata/Safari/History/"))
+           (files
+            (delete (concat dir "..")
+                    (delete (concat dir ".")
+                            (directory-files dir 'full nil 'nosort))))
+           res)
+      (dolist (f files)
+        (call-process "plutil" nil t nil "-convert" "json" "-o" "-" "--" f)
+        (insert "\n")))))
 
 ;;;###autoload
 (defun helm-safari-history ()
