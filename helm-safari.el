@@ -60,10 +60,10 @@
 
 ;;;###autoload
 (defun helm-safari-bookmarks ()
-  "Search Safari Bookmark using `helm'."
+  "Search Safari Bookmarks."
   (interactive)
   (helm :sources 'helm-source-safari-bookmarks
-        :prompt "Find Bookmark: "
+        :prompt "Find Bookmarks: "
         :buffer "*Helm Safari Bookmarks*"))
 
 (defvar helm-safari-history-alist nil)
@@ -83,10 +83,10 @@
 
 ;;;###autoload
 (defun helm-safari-history ()
-  "Search Safari Bookmark using `helm'."
+  "Search Safari History."
   (interactive)
   (helm :sources 'helm-source-safari-history
-        :prompt "Find Bookmark: "
+        :prompt "Find History: "
         :buffer "*Helm Safari History*"))
 
 (provide 'helm-safari)
