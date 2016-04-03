@@ -1,8 +1,9 @@
-;;; helm-safari.el --- Helm interface for Safari Bookmarks and History  -*- lexical-binding: t; -*-
+;;; helm-safari.el --- Browse your Safari bookmarks and history  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016  Chunyang Xu
 
 ;; Author: Chunyang Xu <xuchunyang56@gmail.com>
+;; URL: https://github.com/xuchunyang/helm-safari
 ;; Package-Requires: ((helm "1.9.1") (emacs "24"))
 ;; Version: 0.1
 ;; Keywords: tools
@@ -22,7 +23,9 @@
 
 ;;; Commentary:
 
-;;
+;; Browse your Safari bookmarks and history with Helm.
+
+;; To use, type M-x helm-safari-bookmarks or M-x helm-safari-history
 
 ;;; Code:
 
