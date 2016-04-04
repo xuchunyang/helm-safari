@@ -103,8 +103,7 @@
            (files
             (delete (concat dir "..")
                     (delete (concat dir ".")
-                            (directory-files dir 'full nil 'nosort))))
-           res)
+                            (directory-files dir 'full nil 'nosort)))))
       (dolist (f files)
         (call-process "plutil" nil t nil "-convert" "json" "-o" "-" "--" f)
         (insert "\n")))))
